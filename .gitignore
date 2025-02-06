@@ -1,0 +1,8 @@
+.idea
+.venv
+.cache
+Form/data/
+Chat/data/
+boxplot.py
+Chat/.cache/
+Chat/utils/__pycache__
