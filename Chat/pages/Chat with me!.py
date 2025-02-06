@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
+from dotenv import load_dotenv
 import time
 import re
 import ast
@@ -11,7 +12,8 @@ import requests
 import random
 import threading
 import sys
-from openai import AzureOpenAI
+from openai import AzureOpenAI, azure_endpoint
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils.agent import Agent
@@ -600,10 +602,11 @@ def main():
 
 
 # Set environment variables
-os.environ["OPENAI_API_KEY"] = ""
-os.environ["AZURE_OPENAI_ENDPOINT"] = ('')
+load_dotenv()
+openai_key = os.getenv("OPENAI_API_KEY")
+azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+langchain_key = os.getenv("LANGCHAIN_API_KEY")
 
-os.environ["LANGCHAIN_API_KEY"] = ""
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_PROJECT"] = "chef_hat"
 
@@ -611,13 +614,14 @@ os.environ["LANGCHAIN_PROJECT"] = "chef_hat"
 temperature = 1
 max_tokens = 128
 client = AzureOpenAI(
-    api_key="",
+    api_key=openai_key,
     api_version="2024-08-01-preview",
     azure_endpoint="https://iitlines-swecentral1.openai.azure.com"
 )
 
 deployment_name = 'contact-Chefhat_gpt4omini'
 agent = Agent(client, deployment_name)
+
 client_id = os.getenv("SPOTIPY_CLIENT_ID")
 client_secret = os.getenv("SPOTIPY_CLIENT_SECRET")
 

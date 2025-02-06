@@ -4,6 +4,7 @@ import requests
 import random
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
+from dotenv import load_dotenv
 import time
 import threading
 import os
@@ -145,6 +146,7 @@ def get_track_preview(deezer_id):
     return None
 
 ## Initialization
+load_dotenv()
 client_id = os.getenv("SPOTIPY_CLIENT_ID")
 client_secret = os.getenv("SPOTIPY_CLIENT_SECRET")
 
