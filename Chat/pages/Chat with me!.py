@@ -1,9 +1,8 @@
 import os
 import streamlit as st
-from langchain_openai import AzureChatOpenAI
 import pandas as pd
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
+from spotipy.oauth2 import SpotifyClientCredentials
 import time
 import re
 import ast
@@ -619,10 +618,12 @@ client = AzureOpenAI(
 
 deployment_name = 'contact-Chefhat_gpt4omini'
 agent = Agent(client, deployment_name)
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id="56d77556acd24c079197b8c062f0f71f",
-                                        client_secret="",
-                                        redirect_uri="https://www.google.co.uk/",
-                                        scope="user-library-read playlist-read-private user-read-private"))
+client_id = os.getenv("SPOTIPY_CLIENT_ID")
+client_secret = os.getenv("SPOTIPY_CLIENT_SECRET")
+
+# Initialize Spotipy
+sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id,
+                                                           client_secret=client_secret))
 
 
 if __name__ == "__main__":

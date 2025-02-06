@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 import random
 import spotipy
-from spotipy import SpotifyOAuth
+from spotipy.oauth2 import SpotifyClientCredentials
 import time
 import threading
 import os
@@ -145,10 +145,12 @@ def get_track_preview(deezer_id):
     return None
 
 ## Initialization
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id="56d77556acd24c079197b8c062f0f71f",
-                                        client_secret="7052dcf73a57475cbf7ac32e7ec297b3",
-                                        redirect_uri="https://www.google.co.uk/",
-                                        scope="user-library-read playlist-read-private user-read-private"))
+client_id = os.getenv("SPOTIPY_CLIENT_ID")
+client_secret = os.getenv("SPOTIPY_CLIENT_SECRET")
+
+# Initialize Spotipy
+sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id,
+                                                           client_secret=client_secret))
 
 if 'feedback_submitted' not in st.session_state:
     st.session_state.feedback_submitted = False
