@@ -29,7 +29,7 @@ st.markdown(
 
 user_session_id = _get_session()
 
-data_directory = os.path.join("Form", "data", f"{user_session_id}")  # Move up one directory to Form
+data_directory = os.path.join("Chat", "data", f"{user_session_id}")  # Move up one directory to Form
 
 # Create the directory if it doesn't exist
 os.makedirs(data_directory, exist_ok=True)

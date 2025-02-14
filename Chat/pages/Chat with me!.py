@@ -445,7 +445,7 @@ def main():
             unsafe_allow_html=True
         )
     user_session = _get_session()
-    data_directory = os.path.join("Chat", "prova", f"{user_session}")
+    data_directory = os.path.join("Chat", "data", f"{user_session}")
     os.makedirs(data_directory, exist_ok=True)
     playlist_file_path = os.path.join(data_directory, f"playlist_{user_session}.csv")
     for message in st.session_state.conversation:
