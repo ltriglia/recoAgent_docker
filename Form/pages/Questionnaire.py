@@ -134,7 +134,7 @@ if st.session_state["stage"] == "adjective_form":
             ("Conservative", "Innovative"),
             ("Conventional", "Inventive"),
             ("Demotivating", "Motivating"),
-            ("Boring", "Exiting"),
+            ("Boring", "Exciting"),
             ("Inferior", "Valuable"),
             ("Not interesting", "Interesting"),
             ("Obstructive", "Supportive"),
