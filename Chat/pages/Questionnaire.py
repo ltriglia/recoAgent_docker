@@ -232,7 +232,7 @@ if st.session_state["stage"] == "adjective_form":
             )
 
             # Save the selection using the mapping
-            st.session_state.selections[(adj_left, adj_right)] = option_mapping[selection]
+            selections[(adj_left, adj_right)] = option_mapping[selection]
 
         adj_submit = st.form_submit_button(label='Submit')
 
