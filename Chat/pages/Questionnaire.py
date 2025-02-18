@@ -270,6 +270,7 @@ if st.session_state["stage"] == "last_stage":
         f.write(user_feedback + "\n")
     finish_experiment = st.button("Finish experiment")
     if finish_experiment:
-        st.subheader("Thank you for participating in this experiment. You can close this window now.")
+        st.subheader("Thank you for participating in this experiment.")
+        st.markdown("**Completion code Prolific**: CYM3CK6C ")
 
 
