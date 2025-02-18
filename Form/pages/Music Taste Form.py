@@ -398,7 +398,8 @@ if st.session_state.recommendations_shown and not st.session_state.playlist:
 
     if st.button("Create the playlist!"):
         feedback_df = pd.DataFrame(feedback_data)
-        feedback_df.to_csv("playlist.csv", mode='a', index=False)
+        playlist_file_path = os.path.join(data_directory, f"playlist_{user_session}.csv")
+        feedback_df.to_csv(playlist_file_path, mode='a', index=False)
 
         # Set flag to show message after rerun
         st.session_state.show_message = True
