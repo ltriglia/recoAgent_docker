@@ -570,7 +570,8 @@ def main():
 
                     # Store feedback data for each track
                     feedback_data.append({
-                        'Playlist': song,
+                        'Playlist': track['top_song'],  # Save the name of the track
+                        'Selected': song,  # Indicate if the song is selected
                         'Source': source  # Indicate the source
                     })
 

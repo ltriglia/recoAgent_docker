@@ -97,12 +97,15 @@ if st.session_state["stage"] == "song_form":
             "and your level of enjoyment for each. The second questionnaire will focus on your recent "
             "interaction and how you would describe it. Finally, there will be an option to let the researcher know if "
             "anything did not function properly. Thank you for your collaboration!")
-        st.write("Please indicate whether you knew the proposed songs and how much you enjoyed them."
-                 "Please use the checkbox to indicate if you know the song or not")
+        st.write("Please indicate whether you knew the proposed songs and how much you enjoyed them.")
 
         preferences = {}
         for track in st.session_state.combined_list:
-            knows_song = st.checkbox(f"Do you know the song '{track['top_song']}' by {track['artist']}?", key=track)
+            knows_song = st.radio(
+                f"Do you know the song '{track['top_song']}' by {track['artist']}?",
+                options=["Yes", "No"],
+                key=track
+            )
             like_rating = st.slider(f"How much do you like '{track['top_song']}'?", min_value=0, max_value=10, value=5,
                                     step=1)
             preferences[track['top_song']] = {
