@@ -13,6 +13,8 @@ import random
 import threading
 import sys
 from openai import AzureOpenAI, azure_endpoint
+import logging
+
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -75,7 +77,7 @@ def get_ranked_artists(artist_id, limit):
 
     # Sort artists by popularity in descending order
     ranked_artists = sorted(artists_with_popularity, key=lambda x: x['popularity'], reverse=True)
-    return ranked_artists
+    return ranked_artists, related_artists
 
 def get_top_track(spotify_id):
     """Get the top track of an artist."""
@@ -94,9 +96,11 @@ def get_track_u(spotify_id):
 
 def get_top_songs_from_ranked_artists(artist_id, limit):
     """Get top songs from the first three and last three ranked artists."""
-    ranked_artists = get_ranked_artists(artist_id, limit)
-
+    ranked_artists, related_artists = get_ranked_artists(artist_id, limit)
     # Get top songs for the first three artists
+
+    ranked_list = []
+    related_list =[]
     top_songs_first_three = []
     for artist in ranked_artists[:3]:
         top_track = get_top_track(artist['spotify_id'])
@@ -123,13 +127,23 @@ def get_top_songs_from_ranked_artists(artist_id, limit):
                 'cover_image': top_track['album']['images'][0]['url'],
                 'deezer_id': deezer_id
             })
+    for artist in ranked_artists:
+        ranked_list.append({
+            'artist': artist['name']
+        })
+    for artist in related_artists:
+        related_list.append({
+            'artist': artist['name']
+        })
+    return top_songs_first_three, top_songs_last_three, ranked_list, related_list
 
-    return top_songs_first_three, top_songs_last_three
 
-
-def fetch_artist_data(artist_name, known_list, u_list):
+def fetch_artist_data(artist_name, known_list, u_list, ranked_song, related_song):
     artist_id = get_artist_id(artist_name)
-    top_songs_first_three, top_songs_last_three = get_top_songs_from_ranked_artists(artist_id, limit=15)
+    top_songs_first_three, top_songs_last_three, ranked_songs, related_songs = get_top_songs_from_ranked_artists(artist_id, limit=15)
+
+    ranked_song.extend(ranked_songs)
+    related_song.extend(related_songs)
     known_list.extend(top_songs_first_three)
     u_list.extend(top_songs_last_three)
 
@@ -304,9 +318,11 @@ def update_state_from_llm_response(user_input):
             threads = []
             known_list = []
             u_list = []
+            ranked_song = []
+            related_song = []
 
             for artist_name in artists:
-                thread = threading.Thread(target=fetch_artist_data, args=(artist_name, known_list, u_list))
+                thread = threading.Thread(target=fetch_artist_data, args=(artist_name, known_list, u_list, ranked_song, related_song))
                 threads.append(thread)
                 thread.start()
 
@@ -315,7 +331,8 @@ def update_state_from_llm_response(user_input):
 
             random.shuffle(known_list)
             random.shuffle(u_list)
-
+            st.session_state.ranked_songs = ranked_song
+            st.session_state.related_songs = related_song
             st.session_state.known_list = known_list[:3]
             st.session_state.u_list = u_list[:3]
 
@@ -429,6 +446,8 @@ def main():
         st.session_state.current_audio_url = None
         st.session_state.sidebar_hidden = True
         st.session_state.show_message = False
+        st.session_state.ranked_songs = []
+        st.session_state.related_songs = []
         # Display the initial prompt
         initial_prompt = construct_prompt(st.session_state.stage)
         st.session_state.conversation.append({"role": "assistant", "content": initial_prompt})
@@ -444,10 +463,18 @@ def main():
             """,
             unsafe_allow_html=True
         )
+    logger = logging.getLogger(__name__)
     user_session = _get_session()
     data_directory = os.path.join("Chat", "data", f"{user_session}")
     os.makedirs(data_directory, exist_ok=True)
     playlist_file_path = os.path.join(data_directory, f"playlist_{user_session}.csv")
+    logging_path = os.path.join(data_directory, f"appLog_{user_session}.log")
+    logging.basicConfig(filename=logging_path, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    #logging.basicConfig(stream=sys.stdout, level=logging.INFO,)
+
+
+
+
     for message in st.session_state.conversation:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
@@ -469,12 +496,14 @@ def main():
         with st.chat_message("user"):
              st.markdown(user_input)
         print("Stage before update: ", st.session_state.stage)
+        logger.info(f"Stage before update: {st.session_state.stage}")
         response_content = update_state_from_llm_response(user_input)
 
         if response_content is True:  # If the input was valid
             print("After update user_info: ", st.session_state.user_info)
             print("After update state: ", st.session_state.stage)
-
+            logger.info(f"After update user_info: {st.session_state.user_info}")
+            logger.info(f"After update state: {st.session_state.stage}")
             response_content = agent.generate_response(st.session_state.stage, st.session_state.user_info)
 
             # Add the LLM response to the conversation
@@ -486,11 +515,13 @@ def main():
 
 
             print("Before if: ", st.session_state.stage)
+            logger.info(f"Before if: {st.session_state.stage}")
             if st.session_state.stage == 'suggestion':
                 st.session_state.user_info['current_index'] = st.session_state.current_index
                 track = st.session_state.combined_list[st.session_state.current_index]
                 preview_url = get_track_preview(track['deezer_id'])
                 print("Current index first time: ", st.session_state.current_index)
+                logger.info(f"Current index first time: {st.session_state.current_index} ")
                 if st.session_state.current_index <= st.session_state.max_index:
                     if preview_url:  # Check if preview_url exists
                         st.audio(preview_url, format='audio/mp3')
@@ -510,8 +541,10 @@ def main():
                 
 
             print("Before if - like or not: ", st.session_state.stage)
+            logger.info(f"Before if - like or not: {st.session_state.stage}")
             if st.session_state.stage == 'suggestion':
-                print("Current index - at least second time: ", st.session_state.current_index)
+                print(f"Current index - at least second time: {st.session_state.current_index}")
+                logger.info(f"Current index - at least second time: {st.session_state.current_index}")
                 track = st.session_state.combined_list[st.session_state.current_index]
                 preview_url = get_track_preview(track['deezer_id'])  # Fetch the preview URL from Deezer
                 if st.session_state.current_index <= st.session_state.max_index:
@@ -592,6 +625,20 @@ def main():
                     f.write(f"{entry['role']}: {entry['content']}\n")
                 f.write("\n")  # Add a newline after the conversation
             print("Conversation saved successfully!")
+            logger.info("Conversation saved successfully!")
+            if st.session_state.ranked_songs and st.session_state.related_songs:
+                artists_data = []
+                artists_data.append({
+                    'Ranked': st.session_state.ranked_songs,  # Save the name of the track
+                    'Related': st.session_state.related_songs  # Indicate if the song is selected
+                })
+                deezer_path = os.path.join(data_directory,
+                                           f'deezer_ranked_{user_session}.csv')
+
+                artists_df = pd.DataFrame(artists_data)
+                artists_df.to_csv(deezer_path, mode='a', index=False)
+                print("Artists saved correctly!")
+                logger.info("Artists saved correctly")
             st.session_state.show_message = True
             st.session_state.sidebar_hidden = False
             st.rerun()
